@@ -82,6 +82,5 @@ func (fm *Lastfm) GetLastPlayedDate() string {
 		log.Fatal(err)
 	}
 	tracktime := time.Unix(val, 0).UTC()
-	lastPlay := time.Since(tracktime).String()
-	return lastPlay
+	return time.Since(tracktime).String()
 }
