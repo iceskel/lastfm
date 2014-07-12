@@ -1,14 +1,16 @@
 package lastfm
 
 import (
-	"net/http"
-	"log"
-	"io/ioutil"
 	"encoding/json"
-	"time"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"strconv"
+	"time"
 )
 
+// Lastfm represents the Recenttracks json
+// api.
 type Lastfm struct {
 	Recenttracks struct {
 		Track []struct {
@@ -46,8 +48,8 @@ type Lastfm struct {
 	} `json:"recenttracks"`
 }
 
-
-
+// NewLastfm returns a new Lastfm instance with the given
+// LastfmUser and LastfmKey.
 func NewLastfm(LastfmUser, LastfmKey string) *Lastfm {
 	var track *Lastfm
 
@@ -67,15 +69,20 @@ func NewLastfm(LastfmUser, LastfmKey string) *Lastfm {
 	return track
 }
 
-
+// IsNowPlaying returns the current track
+// that is playing.
 func (fm *Lastfm) IsNowPlaying() bool {
 	return fm.Recenttracks.Track[0].Attr.Nowplaying != ""
 }
 
+// GetCurrentArtistAndTrackName returns the current artist name
+// and track name of the track that is currently playing.
 func (fm *Lastfm) GetCurrentArtistAndTrackName() (string, string) {
 	return fm.Recenttracks.Track[0].Artist.Text, fm.Recenttracks.Track[0].Name
 }
 
+// GetLastPlayedDate returns the date of the last song that
+// was played.
 func (fm *Lastfm) GetLastPlayedDate() string {
 	val, err := strconv.ParseInt(fm.Recenttracks.Track[0].Date.Uts, 10, 64)
 	if err != nil {
