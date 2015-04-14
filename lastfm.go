@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-// Lastfm represents the Recenttracks json
+// lastfmData represents the Recenttracks json
 // api.
-type Lastfm struct {
+type lastfmData struct {
 	Recenttracks struct {
 		Track []struct {
 			Artist struct {
@@ -47,46 +47,89 @@ type Lastfm struct {
 	} `json:"recenttracks"`
 }
 
-// NewLastfm returns a new Lastfm instance with the given
-// LastfmUser and LastfmKey.
-func NewLastfm(LastfmUser, LastfmKey string) (*Lastfm, error) {
-	var track *Lastfm
+// LastfmApi struct for the api.
+type LastfmApi struct {
+	LastfmUser string
+	LastfmKey  string
+}
 
-	url := "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + LastfmUser + "&api_key=" + LastfmKey + "&format=json"
-	res, err := http.Get(url)
-	if err != nil {
-		return nil, err
+// New returns a new Lastfm instance with the given
+// LastfmUser and LastfmKey.
+func New(lastfmUser, lastfmKey string) *LastfmApi {
+	return &LastfmApi{
+		LastfmUser: lastfmUser,
+		LastfmKey:  lastfmKey,
 	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(body, &track); err != nil {
-		return nil, err
-	}
-	return track, nil
 }
 
 // IsNowPlaying returns the current track
 // that is playing.
-func (fm *Lastfm) IsNowPlaying() bool {
-	return fm.Recenttracks.Track[0].Attr.Nowplaying != ""
+func (fm *LastfmApi) IsNowPlaying() (bool, error) {
+	var track *lastfmData
+	url := "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + fm.LastfmUser +
+		"&api_key=" + fm.LastfmKey + "&format=json"
+	res, err := http.Get(url)
+	if err != nil {
+		return false, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(body, &track); err != nil {
+		return false, err
+	}
+
+	return track.Recenttracks.Track[0].Attr.Nowplaying != "", nil
 }
 
 // GetCurrentArtistAndTrackName returns the current artist name
 // and track name of the track that is currently playing.
-func (fm *Lastfm) GetCurrentArtistAndTrackName() (string, string) {
-	return fm.Recenttracks.Track[0].Artist.Text, fm.Recenttracks.Track[0].Name
+func (fm *LastfmApi) GetCurrentArtistAndTrackName() (string, string, error) {
+	var track *lastfmData
+	url := "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + fm.LastfmUser +
+		"&api_key=" + fm.LastfmKey + "&format=json"
+	res, err := http.Get(url)
+	if err != nil {
+		return "", "", err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", "", err
+	}
+	if err := json.Unmarshal(body, &track); err != nil {
+		return "", "", err
+	}
+
+	return track.Recenttracks.Track[0].Artist.Text, track.Recenttracks.Track[0].Name, nil
 }
 
 // GetLastPlayedDate returns the date of the last song that
 // was played.
-func (fm *Lastfm) GetLastPlayedDate() (string, error) {
-	val, err := strconv.ParseInt(fm.Recenttracks.Track[0].Date.Uts, 10, 64)
+func (fm *LastfmApi) GetLastPlayedDate() (string, error) {
+	var track *lastfmData
+	url := "http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + fm.LastfmUser +
+		"&api_key=" + fm.LastfmKey + "&format=json"
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	if err := json.Unmarshal(body, &track); err != nil {
+		return "", err
+	}
+
+	val, err := strconv.ParseInt(track.Recenttracks.Track[0].Date.Uts, 10, 64)
 	if err != nil {
 		return "", err
 	}
 	tracktime := time.Unix(val, 0).UTC()
+
 	return time.Since(tracktime).String(), nil
 }
